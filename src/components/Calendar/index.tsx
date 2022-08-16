@@ -1,11 +1,11 @@
 import React, { ReactElement } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
 import {
   Calendar as CustomCalendar,
   LocaleConfig,
 } from 'react-native-calendars';
+import { CalendarListProps } from 'react-native-calendars';
 
 const MONTH_NAMES = [
   'Janeiro',
@@ -37,12 +37,14 @@ LocaleConfig.locales['pt-br'] = {
   dayNames: DAY_NAMES,
   dayNamesShort: DAY_NAMES.map((day) => day.slice(0, 3).toUpperCase()),
 };
-
 LocaleConfig.defaultLocale = 'pt-br';
 
-export const Calendar = (): ReactElement => {
+interface Props extends CalendarListProps {}
+
+export const Calendar = ({ ...rest }: Props): ReactElement => {
   return (
     <CustomCalendar
+      {...rest}
       firstDay={1}
       minDate={new Date().toLocaleDateString('pt-BR')}
       renderArrow={(direction) => (
