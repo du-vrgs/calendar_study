@@ -14,30 +14,57 @@ import {
   CalendarContent,
 } from './styles';
 
+interface MarkedDate {
+  [key: string]: any;
+}
+
 export const ScheduledScreen = (): ReactElement => {
   const [dates, setDates] = useState({});
   const [selectedDates, setSelectedDates] = useState({});
 
   const selectRangeDates = (date) => {
     const datesSelected = dates;
+
     if (datesSelected[date.timestamp]) {
       delete datesSelected[date.timestamp];
     } else {
       datesSelected[date.timestamp] = date;
     }
+
+    setDates(datesSelected);
     return datesSelected;
   };
 
-  const setMarkedDates = () => {
-    const momentDates = Object.keys(dates).map((date) =>
+  const setMarkedDates = (periodDates) => {
+    const momentDates = Object.keys(periodDates).map((date) =>
       moment.utc(new Date(Number(date))),
     );
 
-    if (momentDates.length) {
+    if (momentDates.length === 1) {
+      const minDate = moment.min(momentDates);
+      const markedDates = {
+        [minDate.format('YYYY-MM-DD')]: {
+          startingDay: true,
+          color: 'green',
+          textColor: 'white',
+        },
+      };
+
+      return markedDates;
+    }
+
+    if (momentDates.length > 1) {
       const minDate = moment.min(momentDates);
       const maxDate = moment.max(momentDates);
 
-      const markedDates = {
+      const periods = [];
+      const differenceOfDays = minDate.diff(maxDate, 'days') * -1;
+
+      for (let day = 1; day < differenceOfDays; day++) {
+        periods.push(minDate.clone().add(day, 'day'));
+      }
+
+      const markedDates: MarkedDate = {
         [minDate.format('YYYY-MM-DD')]: {
           startingDay: true,
           color: 'green',
@@ -50,17 +77,26 @@ export const ScheduledScreen = (): ReactElement => {
         },
       };
 
+      periods.forEach((date) => {
+        const dateKey = moment.utc(new Date(date)).format('YYYY-MM-DD');
+
+        markedDates[dateKey] = {
+          color: 'lightgreen',
+          textColor: 'white',
+          disabled: true,
+        };
+      });
+
       return markedDates;
     }
 
     return {};
   };
 
-  useEffect(() => {
-    setSelectedDates(setMarkedDates());
-  }, [dates]);
-
-  console.log('dates', dates);
+  const handleSelectPeriod = (date) => {
+    const periodDates = selectRangeDates(date);
+    setSelectedDates(setMarkedDates(periodDates));
+  };
 
   return (
     <ScheduleScreenContainer>
@@ -94,7 +130,7 @@ export const ScheduledScreen = (): ReactElement => {
         <Calendar
           markingType='period'
           markedDates={selectedDates}
-          onDayPress={(date) => setDates(selectRangeDates(date))}
+          onDayPress={(date) => handleSelectPeriod(date)}
         />
       </CalendarContent>
     </ScheduleScreenContainer>
